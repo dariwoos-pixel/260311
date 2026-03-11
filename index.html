@@ -432,7 +432,34 @@
 
   <p class="footer-note">본 서비스는 참고용이며, 당첨을 보장하지 않습니다. 재미로만 이용해 주세요.</p>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
+    // Supabase 설정
+    // - Vercel 배포: 프로젝트 설정 → Environment Variables에 SUPABASE_URL, SUPABASE_ANON_KEY 추가
+    // - 로컬/정적: 아래 값을 직접 넣거나, vercel dev 로 /api/config 사용
+    const SUPABASE_URL = '';
+    const SUPABASE_ANON_KEY = '';
+
+    let _supabaseConfigCache = null;
+    async function getSupabaseConfig() {
+      if (_supabaseConfigCache) return _supabaseConfigCache;
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        _supabaseConfigCache = { SUPABASE_URL, SUPABASE_ANON_KEY };
+        return _supabaseConfigCache;
+      }
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        if (data.SUPABASE_URL && data.SUPABASE_ANON_KEY) {
+          _supabaseConfigCache = data;
+          return _supabaseConfigCache;
+        }
+      } catch (e) {
+        console.warn('Supabase 설정 로드 실패 (로컬에서는 index.html에 URL/KEY를 넣거나 vercel dev 사용):', e);
+      }
+      return null;
+    }
+
     const MIN_NUM = 1;
     const MAX_NUM = 45;
     const BALLS_PER_SET = 6;
@@ -567,8 +594,23 @@
           });
         }
         allSets.forEach(addToHistory);
+        saveToSupabase(allSets);
         generateBtn.disabled = false;
       }, delay + 600);
+    }
+
+    async function saveToSupabase(sets) {
+      const config = await getSupabaseConfig();
+      if (!config || !config.SUPABASE_URL || !config.SUPABASE_ANON_KEY) return;
+      try {
+        const { createClient } = supabase;
+        const client = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+        for (const { main, bonus } of sets) {
+          await client.from('lotto_draws').insert({ main, bonus });
+        }
+      } catch (e) {
+        console.warn('Supabase 저장 실패:', e);
+      }
     }
 
     function renderBalls(sets) {
