@@ -1,6 +1,6 @@
 # GitHub 저장소 푸시 방법
 
-저장소: https://github.com/dariwoos-pixel/260311vibe.git
+저장소: https://github.com/dariwoos-pixel/260311
 
 ## 최초 1회 (로컬에서 실행)
 
@@ -8,7 +8,7 @@
 
 ```bash
 git init
-git remote add origin https://github.com/dariwoos-pixel/260311vibe.git
+git remote add origin https://github.com/dariwoos-pixel/260311.git
 git add .
 git commit -m "Initial commit: 로또 번호 추천 서비스"
 git branch -M main
